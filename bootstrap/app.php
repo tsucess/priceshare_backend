@@ -15,9 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Ensure CORS headers are sent for every API response
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
-        $middleware->api(prepend: [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-        ]);
+        // EnsureFrontendRequestsAreStateful is intentionally NOT added here.
+        // The React app uses Bearer token auth, not cookie/session auth.
+        // That middleware enforces CSRF token checks on stateful domains,
+        // which causes 419 errors on every login/register request.
 
         $middleware->alias([
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
