@@ -70,6 +70,11 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($user->is_banned) {
+            $reason = $user->ban_reason ? " Reason: {$user->ban_reason}" : '';
+            return response()->json(['message' => "Your account has been suspended.{$reason}"], 403);
+        }
+
         $user->tokens()->delete();
         $token = $user->createToken('api-token')->plainTextToken;
 
@@ -121,6 +126,9 @@ class AuthController extends Controller
             'bio'        => $user->bio,
             'avatar_url' => $user->avatar_url,
             'visibility' => $user->visibility,
+            'role'             => $user->role,
+            'is_banned'        => $user->is_banned,
+            'is_shadow_banned' => $user->is_shadow_banned,
         ];
     }
 }

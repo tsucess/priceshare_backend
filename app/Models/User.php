@@ -18,7 +18,7 @@ class User extends Authenticatable
         'name', 'username', 'email', 'phone', 'password',
         'state', 'bio', 'occupation', 'gender', 'dob',
         'avatar_url', 'visibility', 'notification_settings',
-        'privacy_settings', 'language',
+        'privacy_settings', 'language', 'role', 'is_banned', 'ban_reason', 'is_shadow_banned',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -30,7 +30,14 @@ class User extends Authenticatable
             'password' => 'hashed',
             'notification_settings' => 'array',
             'privacy_settings' => 'array',
+            'is_banned'        => 'boolean',
+            'is_shadow_banned' => 'boolean',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 
     public function posts(): HasMany

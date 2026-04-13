@@ -48,6 +48,7 @@ class UserController extends Controller
     {
         $posts = $user->posts()
             ->withCount(['likes', 'comments', 'confirms', 'denies'])
+            ->where('is_hidden', false)   // respect per-post hide
             ->latest()
             ->paginate(15);
 

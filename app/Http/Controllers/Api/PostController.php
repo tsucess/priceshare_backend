@@ -13,8 +13,12 @@ class PostController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Post::with('user:id,name,avatar_url,state')
-            ->withCount(['likes', 'comments', 'confirms', 'denies']);
+        $query = Post::with(['user:id,name,avatar_url,state', 'tags:id,name,color'])
+            ->withCount(['likes', 'comments', 'confirms', 'denies'])
+            // Exclude individually hidden posts
+            ->where('is_hidden', false)
+            // Exclude posts from shadow-banned users
+            ->whereHas('user', fn ($q) => $q->where('is_shadow_banned', false));
 
         if ($request->filled('state')) {
             $query->where('state', $request->state);
@@ -45,6 +49,8 @@ class PostController extends Controller
             'gps_accuracy'=> 'nullable|integer',
             'description' => 'nullable|string|max:1000',
             'image_url'   => 'nullable|url',
+            'tags'        => 'nullable|array',
+            'tags.*'      => 'integer|exists:tags,id',
         ]);
 
         $post = $request->user()->posts()->create($request->only([
@@ -52,12 +58,16 @@ class PostController extends Controller
             'location', 'lat', 'lng', 'gps_accuracy', 'description', 'image_url',
         ]));
 
-        return response()->json($post->load('user:id,name,avatar_url'), 201);
+        if ($request->filled('tags')) {
+            $post->tags()->sync($request->tags);
+        }
+
+        return response()->json($post->load(['user:id,name,avatar_url', 'tags:id,name,color']), 201);
     }
 
     public function show(Post $post): JsonResponse
     {
-        $post->load('user:id,name,avatar_url,state')
+        $post->load(['user:id,name,avatar_url,state', 'tags:id,name,color'])
              ->loadCount(['likes', 'comments', 'confirms', 'denies']);
 
         return response()->json($post);
@@ -69,10 +79,19 @@ class PostController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
+        $request->validate([
+            'tags'   => 'nullable|array',
+            'tags.*' => 'integer|exists:tags,id',
+        ]);
+
         $post->update($request->only([
             'product', 'price', 'category', 'state', 'market',
             'location', 'lat', 'lng', 'description', 'image_url',
         ]));
+
+        if ($request->has('tags')) {
+            $post->tags()->sync($request->tags ?? []);
+        }
 
         return response()->json($post);
     }

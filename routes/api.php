@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AlertController;
+use App\Http\Controllers\Api\CategoryTagController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\PostController;
@@ -56,3 +58,56 @@ Route::middleware('auth:sanctum')->group(function () {
 // ─── Public User Profile (wildcard — after /users/me above) ──────────────────
 Route::get('users/{user}',       [UserController::class, 'show']);
 Route::get('users/{user}/posts', [UserController::class, 'posts']);
+
+// ─── Public Taxonomy ─────────────────────────────────────────────────────────
+Route::get('categories', [CategoryTagController::class, 'categories']);
+Route::get('tags',       [CategoryTagController::class, 'tags']);
+
+// ─── Admin Routes (auth + admin role required) ────────────────────────────────
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    // Overview
+    Route::get('stats', [AdminController::class, 'stats']);
+
+    // User management
+    Route::get('users',                        [AdminController::class, 'listUsers']);
+    Route::get('users/{user}',                 [AdminController::class, 'showUser']);
+    Route::put('users/{user}',                 [AdminController::class, 'editUser']);
+    Route::post('users/{user}/ban',            [AdminController::class, 'banUser']);
+    Route::post('users/{user}/unban',          [AdminController::class, 'unbanUser']);
+    Route::post('users/{user}/promote',        [AdminController::class, 'promoteUser']);
+    Route::post('users/{user}/demote',         [AdminController::class, 'demoteUser']);
+    Route::post('users/{user}/shadow-ban',     [AdminController::class, 'shadowBanUser']);
+    Route::post('users/{user}/unshadow-ban',   [AdminController::class, 'unshadowBanUser']);
+    Route::delete('users/{user}',              [AdminController::class, 'deleteUser']);
+
+    // Post management
+    Route::get('posts',                  [AdminController::class, 'listPosts']);
+    Route::put('posts/{post}',           [AdminController::class, 'editPost']);
+    Route::post('posts/{post}/flag',     [AdminController::class, 'flagPost']);
+    Route::post('posts/{post}/unflag',   [AdminController::class, 'unflagPost']);
+    Route::post('posts/{post}/hide',     [AdminController::class, 'hidePost']);
+    Route::post('posts/{post}/unhide',   [AdminController::class, 'unhidePost']);
+    Route::delete('posts/{post}',        [AdminController::class, 'deletePost']);
+
+    // Comment management
+    Route::get('comments',               [AdminController::class, 'listComments']);
+    Route::delete('comments/{comment}',  [AdminController::class, 'deleteComment']);
+
+    // Price alert management
+    Route::get('alerts',                 [AdminController::class, 'listAlerts']);
+    Route::post('alerts',                [AdminController::class, 'storeAlert']);
+    Route::put('alerts/{alert}',         [AdminController::class, 'updateAlert']);
+    Route::delete('alerts/{alert}',      [AdminController::class, 'deleteAlert']);
+
+    // Category management
+    Route::get('categories',                       [AdminController::class, 'listCategories']);
+    Route::post('categories',                      [AdminController::class, 'storeCategory']);
+    Route::put('categories/{category}',            [AdminController::class, 'updateCategory']);
+    Route::delete('categories/{category}',         [AdminController::class, 'deleteCategory']);
+
+    // Tag management
+    Route::get('tags',                             [AdminController::class, 'listTags']);
+    Route::post('tags',                            [AdminController::class, 'storeTag']);
+    Route::put('tags/{tag}',                       [AdminController::class, 'updateTag']);
+    Route::delete('tags/{tag}',                    [AdminController::class, 'deleteTag']);
+});
