@@ -93,7 +93,7 @@ class PostController extends Controller
             $post->tags()->sync($request->tags ?? []);
         }
 
-        return response()->json($post);
+        return response()->json($post->load('tags:id,name,color'));
     }
 
     public function destroy(Request $request, Post $post): JsonResponse

@@ -35,7 +35,7 @@ class AdminController extends Controller
                                     ->groupBy('category')->orderByDesc('count')->take(5)->get(),
             'recent_users'   => User::latest()->take(5)->get(['id','name','email','state','role','is_banned','created_at']),
             'recent_posts'   => Post::with('user:id,name')->latest()->take(5)
-                                    ->get(['id','product','price','state','category','is_flagged','created_at','user_id']),
+                                    ->get(['id','product','price','state','category','is_flagged','is_hidden','created_at','user_id']),
         ]);
     }
 
@@ -149,7 +149,7 @@ class AdminController extends Controller
     // ─── Post Management ───────────────────────────────────────────────────────
     public function listPosts(Request $request): JsonResponse
     {
-        $query = Post::with('user:id,name,avatar_url')
+        $query = Post::with(['user:id,name,avatar_url', 'tags:id,name,color'])
                      ->withCount(['likes', 'comments', 'confirms', 'denies']);
 
         if ($request->filled('search')) {
@@ -204,7 +204,7 @@ class AdminController extends Controller
             'product', 'price', 'category', 'state', 'market', 'location', 'description', 'image_url',
         ]));
 
-        return response()->json(['message' => 'Post updated by admin.', 'post' => $post->fresh()->load('user:id,name')]);
+        return response()->json(['message' => 'Post updated by admin.', 'post' => $post->fresh()->load(['user:id,name', 'tags:id,name,color'])]);
     }
 
     public function hidePost(Request $request, Post $post): JsonResponse
@@ -223,7 +223,7 @@ class AdminController extends Controller
     // ─── Comment Management ────────────────────────────────────────────────────
     public function listComments(Request $request): JsonResponse
     {
-        $query = Comment::with(['user:id,name', 'post:id,product']);
+        $query = Comment::with(['user:id,name,email', 'post:id,product,state']);
 
         if ($request->filled('search')) {
             $query->where('body', 'like', '%' . $request->search . '%');
